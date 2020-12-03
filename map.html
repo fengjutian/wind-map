@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>HELLO WORLD</title>
+    <style>
+        html, body{
+            margin: 0;
+        }
+    </style>
+    <!-- <script crossorigin="anonymous" integrity="sha512-ZRdjJAYP8Kij8Lkln9uiGj0jIrMDLAALm1ZB2b3VfV9XJ0nR4zbJmHKB42/A4tgMlZS4DTPnSAmcYRoS0dginA==" src="https://lib.baomitu.com/echarts/5.0.0/echarts.min.js"></script> -->
+    <script type="text/javascript" src="http://api.tianditu.gov.cn/api?v=4.0&tk=a3db440b1e1b8f00eeeae7961e75caff"></script>
+
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
+    <script src='./echarts.min.js'></script>
+    <script src='./tmap.js'></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/extension/bmap.min.js"></script>
+    <!-- <script crossorigin="anonymous" integrity="sha512-q0nIjE1LHEOioBDYuyhml+xxTm+ftiPuzdWgEgwq5g3YAZ5CWDmjDUs4t7pFeWnvFQe7eLQg/+PepPbacIDtkA==" src="https://lib.baomitu.com/echarts/4.9.0-rc.1/echarts.min.js"></script> -->
+
+</head>
+<body>
+<!-- <div id="mapDiv" style="position:absolute;width:100vw; height:100vh"></div> -->
+<div id="container" style="width: 100vw;height: 100vh;"></div>
+
+<script>
+  var dom = document.getElementById("container");
+  var myChart = echarts.init(dom);
+  var app = {};
+  option = null;
+  $.getJSON('json/winds.json', function (windData) {
+      var data = [];
+      var p = 0;
+      var maxMag = 0;
+      var minMag = Infinity;
+      for (var j = 0; j < windData.ny; j++) {
+          for (var i = 0; i <= windData.nx; i++) {
+              // Continuous data.
+              var p = (i % windData.nx) + j * windData.nx;
+              var vx = windData.data[p][0];
+              var vy = windData.data[p][1];
+              var mag = Math.sqrt(vx * vx + vy * vy);
+              // 数据是一个一维数组
+              // [ [经度, 维度，向量经度方向的值，向量维度方向的值] ]
+              data.push([
+                  i / windData.nx * 360 - 180,
+                  j / windData.ny * 180 - 90,
+                  vx,
+                  vy,
+                  mag
+              ]);
+              maxMag = Math.max(mag, maxMag);
+              minMag = Math.min(mag, minMag);
+          }
+      }
+      myChart.setOption(option = {
+          visualMap: {
+              left: 'right',
+              min: minMag,
+              max: maxMag,
+              dimension: 4,
+              inRange: {
+                  color: ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf', '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+              },
+              realtime: false,
+              calculable: true,
+              textStyle: {
+                  color: '#fff'
+              }
+          },
+          bmap: {
+              center: [114,21],
+              zoom: 1,
+          },
+          series: [
+              {
+              type: 'flowGL',
+              coordinateSystem: 'amap',
+              data: data,
+              supersampling: 4,
+              particleType: 'line',
+              particleDensity: 128,
+              particleSpeed: 1,
+              itemStyle: {
+                  opacity: 0.7
+              }
+          }
+          ]
+      });
+  });
+  ;
+  if (option && typeof option === "object") {
+      myChart.setOption(option, true);
+  }
+</script>
+
+</body>
+</html>
